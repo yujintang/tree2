@@ -26,19 +26,41 @@ function createObj(dir, opt) {
     let array = [];
     let dirArray = fs.readdirSync(dir).sort(orderedDict);
     for (let file of dirArray) {
-        if (!/^\./.test(file)) {
+        let tempDir = path.join(dir, file);
+        if (!/^\./.test(file) && fs.existsSync(tempDir)) {
             let obj = {};
             obj.name = file;
-            let stats = fs.statSync(path.join(dir, file));
-            if (stats.isDirectory()) {
-                obj.type = 'd';
-                if(!opt.ignore.includes(obj.name)){
-                    obj.children = createObj(path.join(dir, file), opt)
+            let stats = fs.statSync(tempDir);
+            obj.size = stats.size;
+            if (stats.isFile()) {
+                obj.type = 'File'
             }
+            if (stats.isDirectory()) {
+                obj.type = 'Directory'
+            }
+            if (stats.isBlockDevice()) {
+                obj.type = 'BlockDevice'
+            }
+            if (stats.isCharacterDevice()) {
+                obj.type = 'CharacterDevice'
+            }
+            if (stats.isSymbolicLink()) {
+                obj.type = 'SymbolicLink'
+            }
+            if (stats.isFIFO()) {
+                obj.type = 'FIFO'
+            }
+            if (stats.isSocket()) {
+                obj.type = 'Socket'
+            }
+
+            if (obj.type == 'Directory' && !opt.ignore.includes(obj.name)) {
+                obj.children = createObj(path.join(dir, file), opt)
+            }
+            array.push(obj);
         }
-        array.push(obj);
     }
-}
+    
     return array;
 }
 ;
@@ -89,7 +111,7 @@ function colorName(obj, opt) {
     if (!opt.color) {
         return obj
     }
-    if (obj.type == 'd') {
+    if (obj.type == 'Directory') {
         obj.name = chalk.blue(obj.name);
     }
     if (path.extname(obj.name) == '.md') {
@@ -99,18 +121,18 @@ function colorName(obj, opt) {
         obj.name = chalk.green(obj.name);
     }
     if (path.extname(obj.name) == '.js') {
-        obj.name = path.basename(obj.name,'.js') + chalk.magenta('.js');
+        obj.name = path.basename(obj.name, '.js') + chalk.magenta('.js');
     }
     return obj;
 }
 
 function tree2File(opt, data) {
-    if(!opt.color){
+    if (!opt.color) {
         data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + path.basename(opt.dir) + '\n' + data + '\n```\n';
-    }else {
+    } else {
         opt.color = false;
         let res = stru(createObj(opt.dir, opt), [], opt).join('\n');
-        data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + path.basename(opt.dir) + '\n'+ res + '\n```\n';
+        data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + path.basename(opt.dir) + '\n' + res + '\n```\n';
     }
     fs.appendFileSync(path.join(process.cwd(), 'tree2.md'), data);
 }
