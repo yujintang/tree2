@@ -1,0 +1,18 @@
+{
+  "name": "tree2",
+  "version": "1.0.4",
+  "description": "文件目录树",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "tree2": "./bin/tree2"
+  },
+  "author": "yujintang",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^1.1.3",
+    "commander": "^2.9.0"
+  }
+}
