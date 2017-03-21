@@ -5,13 +5,13 @@
 
 const fs = require('fs'),
     path = require('path'),
+    execa = require('execa'),
     chalk = require('chalk');
 
 
 exports.result = function (opt) {
     console.log('\n');
-    console.log(path.basename(opt.dir));
-    let res = stru(createObj(opt.dir, opt), [], opt).join('\n');
+    let res = stru(createObj(opt.dir, opt, 0), [], opt).join('\n');
     console.log(res);
     opt.save && tree2File(opt, res);
     return res;
@@ -22,8 +22,12 @@ exports.result = function (opt) {
  * @param opt
  * @returns {Array}
  */
-function createObj(dir, opt) {
+function createObj(dir, opt, layer) {
+
     let array = [];
+    if (++layer > 10) {
+        return array;
+    }
     let dirArray = fs.readdirSync(dir).sort(orderedDict);
     for (let file of dirArray) {
         let tempDir = path.join(dir, file);
@@ -55,15 +59,14 @@ function createObj(dir, opt) {
             }
 
             if (obj.type == 'Directory' && !opt.ignore.includes(obj.name)) {
-                obj.children = createObj(path.join(dir, file), opt)
+                obj.children = createObj(path.join(dir, file), opt, layer)
             }
             array.push(obj);
         }
     }
-    
+
     return array;
 }
-;
 
 /**
  * 数据结构转换为图
@@ -118,22 +121,46 @@ function colorName(obj, opt) {
         obj.name = chalk.red(obj.name);
     }
     if (path.extname(obj.name) == '.json') {
-        obj.name = chalk.green(obj.name);
+        obj.name = chalk.red(obj.name);
     }
     if (path.extname(obj.name) == '.js') {
-        obj.name = path.basename(obj.name, '.js') + chalk.magenta('.js');
+        obj.name = path.basename(obj.name, '.js') + chalk.green('.js');
+    }
+    if (path.extname(obj.name) == '.css') {
+        obj.name = path.basename(obj.name, '.css') + chalk.magenta('.css');
+    }
+    if (path.extname(obj.name) == '.vue') {
+        obj.name = path.basename(obj.name, '.vue') + chalk.cyan('.vue');
+    }
+    if (path.extname(obj.name) == '.html') {
+        obj.name = path.basename(obj.name, '.html') + chalk.blue('.html');
     }
     return obj;
 }
 
 function tree2File(opt, data) {
     if (!opt.color) {
-        data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + path.basename(opt.dir) + '\n' + data + '\n```\n';
+        data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + '\n' + data + '\n```\n';
     } else {
         opt.color = false;
-        let res = stru(createObj(opt.dir, opt), [], opt).join('\n');
-        data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + path.basename(opt.dir) + '\n' + res + '\n```\n';
+        let res = stru(createObj(opt.dir, opt, 0), [], opt).join('\n');
+        data = '###文件生成树\n**有任何问题，请联系shanquan54@gmail.com**\n```\n' + res + '\n```\n';
     }
     fs.appendFileSync(path.join(process.cwd(), 'tree2.md'), data);
 }
+
+/**
+ * tree2 版本升级
+ */
+exports.update = function () {
+    console.log(chalk.green('[tree2] ') + 'Be sure to have the latest version by doing `npm install tree2@latest -g` before doing this procedure.');
+    console.log(chalk.green('[tree2] ') + 'Start update...');
+    execa.stdout('npm', ['install', 'tree2', '-g'])
+        .then(result => {
+            console.log(chalk.green('[tree2] ') + 'Upgrade success!\n' + result)
+        })
+        .catch(e => {
+            console.log(chalk.green('[tree2] ') + 'Upgrade failed\n' + e);
+        })
+};
 

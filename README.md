@@ -34,5 +34,9 @@ $tree2 -c -i go,node_modules -s /usr/local
 ```
 $tree2 -h 
 ```
+#### 更新
+```
+$tree2 update
+```
 
 **有任何问题，可联系：shanquan54@gmail.com**
